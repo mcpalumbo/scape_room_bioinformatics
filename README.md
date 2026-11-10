@@ -4,7 +4,7 @@ Pantallas de una **sala de escape de bioinformática** creada para la **Noche de
 
 El Dr. Elías Helix, que estudiaba un virus de 10 000 años recuperado del hielo antártico, aparece muerto en su laboratorio. Para encontrar al culpable, los equipos resuelven juegos de **mapeo de ADN, estructura de proteínas, grafos y código genético** antes de que el protocolo de seguridad borre toda la investigación en 40 minutos.
 
-**Demo:**[ https://USUARIO.github.io/REPO/](https://mcpalumbo.github.io/scape_room_bioinformatics/)
+**Demo:**[ https://mcpalumbo.github.io/scape_room_bioinformatics/](https://mcpalumbo.github.io/scape_room_bioinformatics/)
 
 ## Pantallas
 
