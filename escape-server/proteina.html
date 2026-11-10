@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Visor de Estructuras — Paleovirus A7</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #app{position:relative;z-index:1;display:grid;grid-template-columns:1fr 380px;height:100vh}
+    #viewer{position:relative;width:100%;height:100%}
+    #side{border-left:1px solid var(--line);background:rgba(4,10,18,.95);padding:22px 20px;overflow:auto;display:flex;flex-direction:column;gap:18px}
+    .note{border:1px solid rgba(255,178,62,.35);background:rgba(255,178,62,.06);padding:14px 16px;line-height:1.5;font-size:15px}
+    .note .from{font-size:11px;letter-spacing:2px;color:var(--warn);text-transform:uppercase;margin-bottom:6px}
+    .legend{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;font-size:14px}
+    .ball{width:16px;height:16px;border-radius:50%;box-shadow:inset -3px -3px 5px rgba(0,0,0,.4)}
+    .box-title{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+    .btns{display:flex;flex-wrap:wrap;gap:8px}
+    .btns button{flex:1 1 auto;padding:10px 8px}
+    .hud{position:absolute;top:18px;left:22px;z-index:5;pointer-events:none}
+    .hud .t{font-family:var(--display);letter-spacing:.25em;font-size:18px}
+    .hud .t b{color:var(--accent-blue)}
+    .hud .s{color:var(--muted);font-size:13px;margin-top:4px}
+    .ctrl{position:absolute;bottom:16px;left:22px;z-index:5;color:var(--muted);font-size:13px;pointer-events:none}
+    kbd{border:1px solid var(--muted);padding:0 5px;border-radius:3px;color:var(--fg)}
+    #gl-error{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:40px;color:var(--danger);font-size:18px;line-height:1.6;z-index:6}
+  </style>
+</head>
+<body>
+  <div id="bg-grid"></div>
+  <div id="app">
+    <div id="viewer">
+      <div class="hud">
+        <div class="t">PALEOVIRUS <b>A7</b> · VP1</div>
+        <div class="s">Proteína de cápside — modelo cristalográfico</div>
+      </div>
+      <div id="gl-error"></div>
+      <div class="ctrl">
+        Mouse: arrastrar para rotar · rueda para zoom &nbsp;|&nbsp; Teclado: <kbd>←↑↓→</kbd> rotar · <kbd>+</kbd><kbd>−</kbd> zoom
+      </div>
+    </div>
+
+    <aside id="side">
+      <div class="note">
+        <div class="from">Cuaderno de laboratorio · M. P. Nodal</div>
+        <b>11/11</b> — Comparé la VP1 del A7 contra la cepa del hielo. Solo cambiaron dos posiciones, las marqué.<br>
+        Esto es lo que lo hace letal. Elías no quiere que nadie más lo sepa.<br><br>
+        <b>12/11</b> — Por las dudas, lo guardé donde siempre: lo que cambió, tal cual lo anotamos en el lab.<br>
+        <span class="muted">Mutantes VP1: ___145 &nbsp;·&nbsp; ___184</span>
+      </div>
+
+      <div>
+        <button id="btn-help" style="width:100%">¿Qué estoy mirando?</button>
+        <div id="help-box" class="hidden" style="margin-top:10px">
+          <p style="margin:0;line-height:1.5;font-size:14px">
+            Esta es una proteína: una cadena de piezas encadenadas. Cada pieza tiene un tramo común a todas
+            y una parte que la diferencia de las demás. Las piezas marcadas muestran sus átomos.
+          </p>
+          <p class="muted" style="font-size:13px;line-height:1.5">Los modelos cristalográficos no muestran los hidrógenos.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="box-title">Colores de los átomos</div>
+        <div class="legend">
+          <span class="ball" style="background:#909090"></span><span>Carbono (C)</span>
+          <span class="ball" style="background:#3050f8"></span><span>Nitrógeno (N)</span>
+          <span class="ball" style="background:#ff0d0d"></span><span>Oxígeno (O)</span>
+          <span class="ball" style="background:#ffff30"></span><span>Azufre (S)</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="box-title">Vistas</div>
+        <div class="btns" id="focus-btns"></div>
+        <div class="btns" style="margin-top:8px">
+          <button id="btn-all">Proteína completa</button>
+          <button id="btn-spin">Girar: no</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="assets/vendor/3Dmol-min.js"></script>
+  <script src="assets/pdb/paleovirus_a7.js"></script>
+  <script>
+  (() => {
+    // ======= CONFIGURACIÓN =======
+    // Residuos marcados (posición en la estructura). La contraseña del server sale de acá.
+    const MARKED = [145, 184];
+    // =============================
+
+    // Diagnóstico: si el navegador no tiene WebGL o falta un archivo, lo dice en pantalla
+    function showError(msg){
+      const el = document.getElementById('gl-error');
+      el.innerHTML = msg; el.style.display = 'flex';
+    }
+    const testCanvas = document.createElement('canvas');
+    if (!(testCanvas.getContext('webgl2') || testCanvas.getContext('webgl'))){
+      showError('Este navegador no tiene WebGL (gráficos 3D) activado.<br>Probá con otro navegador o activá la aceleración por hardware en la configuración.');
+      return;
+    }
+    if (!window.$3Dmol || !window.PALEOVIRUS_PDB){
+      showError('Falta un archivo: assets/vendor/3Dmol-min.js o assets/pdb/paleovirus_a7.js.<br>Copiá la carpeta escape-server completa.');
+      return;
+    }
+
+    const viewer = $3Dmol.createViewer(document.getElementById('viewer'), { backgroundColor: '#03080f', antialias: true });
+    viewer.addModel(window.PALEOVIRUS_PDB, 'pdb');
+
+    const residueStyle = { stick: { radius: 0.25, colorscheme: 'Jmol' }, sphere: { scale: 0.3, colorscheme: 'Jmol' } };
+    viewer.setStyle({}, { cartoon: { color: '#5b9bd5', opacity: 0.75, thickness: 0.4 } });
+    MARKED.forEach(resi => {
+      viewer.addStyle({ resi }, residueStyle);
+      const ca = viewer.selectedAtoms({ resi, atom: 'CA' })[0];
+      viewer.addLabel(String(resi), {
+        position: { x: ca.x, y: ca.y, z: ca.z }, inFront: true,
+        fontSize: 18, fontColor: '#ffb23e', backgroundColor: '#03080f', backgroundOpacity: 0.85,
+        borderColor: '#ffb23e', borderThickness: 1.5, alignment: 'bottomCenter', screenOffset: { x: 0, y: -18 },
+      });
+    });
+    viewer.zoomTo();
+    viewer.render();
+
+    // botones de foco
+    const btns = document.getElementById('focus-btns');
+    MARKED.forEach(resi => {
+      const b = document.createElement('button');
+      b.textContent = 'Acercar a ' + resi;
+      b.addEventListener('click', () => { viewer.zoomTo({ resi }, 800); });
+      btns.appendChild(b);
+    });
+    document.getElementById('btn-help').addEventListener('click', () => document.getElementById('help-box').classList.toggle('hidden'));
+    document.getElementById('btn-all').addEventListener('click', () => viewer.zoomTo({}, 800));
+
+    let spinning = false;
+    const spinBtn = document.getElementById('btn-spin');
+    function setSpin(on){
+      spinning = on;
+      viewer.spin(on ? 'y' : false, 0.4);
+      spinBtn.textContent = 'Girar: ' + (on ? 'sí' : 'no');
+    }
+    spinBtn.addEventListener('click', () => setSpin(!spinning));
+
+    // teclado
+    document.addEventListener('keydown', e => {
+      const step = 8;
+      if (e.key === 'ArrowLeft')  viewer.rotate(-step, 'y');
+      else if (e.key === 'ArrowRight') viewer.rotate(step, 'y');
+      else if (e.key === 'ArrowUp')    viewer.rotate(-step, 'x');
+      else if (e.key === 'ArrowDown')  viewer.rotate(step, 'x');
+      else if (e.key === '+' || e.key === '=') viewer.zoom(1.15);
+      else if (e.key === '-') viewer.zoom(1 / 1.15);
+      else return;
+      e.preventDefault();
+      viewer.render();
+    });
+
+    // si nadie toca nada por 90 s, vuelve a la vista general girando
+    let idleT;
+    function resetIdle(){
+      clearTimeout(idleT);
+      if (spinning) setSpin(false);
+      idleT = setTimeout(() => { viewer.zoomTo({}, 1000); setSpin(true); }, 90000);
+    }
+    ['mousedown', 'wheel', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, resetIdle));
+    window.addEventListener('resize', () => viewer.resize());
+    resetIdle();
+  })();
+  </script>
+</body>
+</html>

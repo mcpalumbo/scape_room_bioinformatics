@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Protocolo Austral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#020509;
+    --fg:#d8ecff;
+    --muted:#5f7f99;
+    --accent:#2ea8ff;
+    --accent-rgb:46,168,255;
+    --ok:#21f0a0;
+    --warn:#ffb23e;
+    --danger:#ff3b5c;
+    --mono:'Share Tech Mono','Courier New',monospace;
+    --display:'Orbitron','Share Tech Mono','Courier New',monospace;
+  }
+  body.critical{ --accent:#ff3b5c; --accent-rgb:255,59,92; }
+  body.warning{  --accent:#ffb23e; --accent-rgb:255,178,62; }
+  body.unlocked{ --accent:#21f0a0; --accent-rgb:33,240,160; }
+  body.dead{     --accent:#ff3b5c; --accent-rgb:255,59,92; }
+
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);
+    background-image:
+      radial-gradient(ellipse at center, rgba(var(--accent-rgb),.10), transparent 60%),
+      linear-gradient(rgba(var(--accent-rgb),.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(var(--accent-rgb),.06) 1px, transparent 1px);
+    background-size:100% 100%, 48px 48px, 48px 48px;
+    color:var(--fg);
+    font-family:var(--mono);
+    overflow:hidden;
+    transition:background-color .6s;
+  }
+  /* scanlines */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+    background:repeating-linear-gradient(180deg, rgba(0,0,0,.25) 0 1px, transparent 1px 3px);
+  }
+
+  .frame{position:fixed;inset:24px;border:1px solid rgba(var(--accent-rgb),.25);pointer-events:none}
+  .frame::before,.frame::after{content:"";position:absolute;width:40px;height:40px;border:3px solid var(--accent)}
+  .frame::before{top:-2px;left:-2px;border-right:0;border-bottom:0}
+  .frame::after{bottom:-2px;right:-2px;border-left:0;border-top:0}
+
+  .top,.bottom{position:fixed;left:48px;right:48px;display:flex;justify-content:space-between;
+    font-size:14px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+  .top{top:44px}
+  .bottom{bottom:44px}
+  .top b{color:var(--accent)}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-right:10px;
+    box-shadow:0 0 12px var(--accent);animation:blink 1.2s infinite}
+
+  main{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px}
+
+  .title{font-family:var(--display);font-weight:800;letter-spacing:.35em;font-size:clamp(28px,4vw,56px);
+    color:var(--accent);text-shadow:0 0 24px rgba(var(--accent-rgb),.6)}
+  .subtitle{color:var(--muted);letter-spacing:.3em;font-size:clamp(12px,1.4vw,18px);text-transform:uppercase;text-align:center}
+
+  #display{font-family:var(--display);font-weight:800;font-variant-numeric:tabular-nums;
+    font-size:clamp(90px,19vw,300px);line-height:1;color:var(--fg);
+    text-shadow:0 0 18px rgba(var(--accent-rgb),.9),0 0 60px rgba(var(--accent-rgb),.45)}
+  body.critical #display{color:#ffd0d8;animation:pulse 1s infinite}
+  body.paused #display{opacity:.35}
+
+  .progress{width:min(70vw,1100px)}
+  .progress .label{display:flex;justify-content:space-between;font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;text-transform:uppercase}
+  .progress .label b{color:var(--accent)}
+  .bar{height:14px;border:1px solid rgba(var(--accent-rgb),.5);padding:2px}
+  .bar>div{height:100%;width:0;background:repeating-linear-gradient(90deg,var(--accent) 0 10px,transparent 10px 13px);
+    box-shadow:0 0 12px rgba(var(--accent-rgb),.6);transition:width 1s linear}
+
+  #log{position:fixed;left:56px;bottom:84px;width:min(46vw,620px);height:132px;overflow:hidden;
+    font-size:13px;line-height:22px;color:rgba(var(--accent-rgb),.75);
+    mask-image:linear-gradient(180deg,transparent,#000 40%)}
+
+  .input-container{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .input-label{font-size:16px;letter-spacing:4px;color:var(--accent);text-transform:uppercase}
+  #clave{width:min(560px,80vw);padding:16px 22px;font:24px var(--mono);letter-spacing:6px;text-align:center;
+    color:var(--fg);background:rgba(var(--accent-rgb),.06);border:1px solid rgba(var(--accent-rgb),.5);outline:none}
+  #clave:focus{box-shadow:0 0 0 3px rgba(var(--accent-rgb),.25),0 0 30px rgba(var(--accent-rgb),.25)}
+  #clave::placeholder{color:rgba(var(--accent-rgb),.35)}
+  #claveMsg{height:22px;font-size:16px;letter-spacing:3px;color:var(--danger)}
+  .shake{animation:shake .45s}
+
+  .state{display:none;text-align:center}
+  .state h2{font-family:var(--display);font-size:clamp(30px,5vw,80px);margin:0;letter-spacing:.12em;color:var(--accent);
+    text-shadow:0 0 30px rgba(var(--accent-rgb),.7)}
+  .state p{font-size:clamp(16px,2vw,26px);letter-spacing:.2em;color:var(--fg);margin:12px 0 0}
+  body.unlocked #stateOk, body.dead #stateDead{display:block;animation:appear .8s ease-out}
+  body.unlocked .input-container, body.dead .input-container,
+  body.idle .input-container, body.idle .progress, body.idle #display{display:none}
+  body.idle #idle{display:block}
+  body.dead #display{animation:flash .4s 6}
+  body.unlocked #display{font-size:clamp(60px,10vw,170px)}
+  body.unlocked .progress, body.unlocked #log, body.dead #log{display:none}
+  .state h2{white-space:nowrap}
+
+  #paused{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-6deg);display:none;
+    font-family:var(--display);font-size:clamp(40px,8vw,120px);color:var(--warn);letter-spacing:.2em;
+    border:6px solid var(--warn);padding:10px 40px;background:rgba(0,0,0,.6);z-index:40}
+  body.paused #paused{display:block}
+
+  #help{position:fixed;right:56px;bottom:84px;font-size:12px;line-height:20px;color:var(--muted);text-align:right;opacity:.7}
+  body:not(.idle) #help{display:none}
+  kbd{border:1px solid var(--muted);border-radius:3px;padding:0 5px;color:var(--fg)}
+
+  /* video de introducción (María Paula), tapa todo hasta que termina */
+  #intro{position:fixed;inset:0;z-index:60;background:#000;display:none}
+  #intro video{width:100%;height:100%;object-fit:contain;display:block}
+  body.intro #intro{display:block}
+
+  #toast{position:fixed;top:90px;left:50%;transform:translateX(-50%);font-size:16px;letter-spacing:3px;color:var(--warn);opacity:0;transition:opacity .3s}
+
+  @keyframes blink{50%{opacity:.2}}
+  @keyframes pulse{50%{transform:scale(1.03)}}
+  @keyframes flash{50%{opacity:0}}
+  @keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+  @keyframes appear{from{opacity:0;transform:scale(1.15)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body class="idle">
+  <div class="frame"></div>
+
+  <div class="top">
+    <span><span class="dot"></span>Servidor Austral — <b id="statusTxt">en espera</b></span>
+    <span>Instituto Nacional de Virología Antártica</span>
+  </div>
+
+  <main>
+    <section id="idle" class="state">
+      <div class="title">PROTOCOLO AUSTRAL</div>
+      <p class="subtitle" style="margin-top:22px">Sistema de autodestrucción de datos · Paleovirus A7</p>
+    </section>
+
+    <div id="display">40:00</div>
+
+    <div class="progress">
+      <div class="label"><span>Eliminando archivos del proyecto</span><b id="pct">0%</b></div>
+      <div class="bar"><div id="barFill"></div></div>
+    </div>
+
+    <section id="stateOk" class="state">
+      <h2>PROTOCOLO DESACTIVADO</h2>
+      <p>Los datos del Paleovirus A7 están a salvo</p>
+      <p id="elapsedTxt" style="color:var(--accent)"></p>
+    </section>
+
+    <section id="stateDead" class="state">
+      <h2>ARCHIVOS ELIMINADOS</h2>
+      <p>Las pruebas se perdieron para siempre</p>
+    </section>
+
+    <div class="input-container">
+      <div class="input-label">› Código de autorización</div>
+      <input id="clave" type="password" placeholder="●●●●●●●●●●●●" autocomplete="off" spellcheck="false" />
+      <div id="claveMsg"></div>
+    </div>
+  </main>
+
+  <div id="log"></div>
+  <div id="paused">PAUSA</div>
+  <div id="toast"></div>
+  <div id="intro"><video id="introVideo" src="video/intro.mp4" preload="auto" playsinline></video></div>
+
+  <div id="help">
+    Operador:<br>
+    <kbd>Espacio</kbd> video de intro → arranca solo · <kbd>R</kbd> iniciar sin video<br>
+    Durante el video: <kbd>S</kbd> saltearlo y arrancar<br>
+    <kbd>F2</kbd> pausa · <kbd>F3</kbd> +1 min · <kbd>F4</kbd> −1 min<br>
+    <kbd>F8</kbd> reiniciar para el próximo turno · <kbd>F11</kbd> pantalla completa
+  </div>
+
+  <div class="bottom">
+    <span>Clasificación: confidencial — nivel 5</span>
+    <span>Sistema de seguridad v4.0</span>
+  </div>
+
+  <audio id="audAlarm"  src="audio/alarm.mp3" preload="auto"></audio>
+  <audio id="audInicio" src="audio/inicio.mp3" preload="auto"></audio>
+  <audio id="audInicioRapido" src="audio/inicio_rapido.mp3" preload="auto"></audio>
+  <audio id="audUnlock" src="audio/desbloqueo.mp3" preload="auto"></audio>
+  <audio id="audFinal"  src="audio/final.mp3" preload="auto"></audio>
+
+<script>
+(() => {
+  // ======= CONFIGURACIÓN =======
+  const UNLOCK_CODE = "aguantelaciencia";   // se compara sin mayúsculas, espacios ni tildes
+  const INITIAL_MINUTES = 40;
+  const WARNING_SECONDS = 10 * 60;          // pasa a naranja
+  const CRITICAL_SECONDS = 2 * 60;          // pasa a rojo
+  // =============================
+
+  const $ = id => document.getElementById(id);
+  const body = document.body;
+  const display = $("display"), claveIn = $("clave"), claveMsg = $("claveMsg");
+  const aud = {
+    alarm: $("audAlarm"), inicio: $("audInicio"), inicioRapido: $("audInicioRapido"),
+    unlock: $("audUnlock"), final: $("audFinal"),
+  };
+
+  let totalSeconds = INITIAL_MINUTES * 60;
+  let remaining = totalSeconds;
+  let tickHandle = null;
+  let state = "idle";   // idle | intro | running | paused | unlocked | dead
+  let audioToken = 0;   // invalida secuencias de audio viejas al reiniciar
+
+  const normalize = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  function fmt(sec){
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+
+  function setState(s){
+    state = s;
+    body.classList.remove("idle","intro","paused","unlocked","dead");
+    if (s !== "running") body.classList.add(s);
+    if (s === "intro") body.classList.add("idle");   // detrás del video queda la pantalla de espera
+    $("statusTxt").textContent = {
+      idle:"en espera", intro:"mensaje entrante", running:"borrado en curso", paused:"en pausa",
+      unlocked:"desactivado", dead:"datos eliminados"
+    }[s];
+  }
+
+  function render(){
+    display.textContent = fmt(remaining);
+    const pct = Math.round(100 * (totalSeconds - remaining) / totalSeconds);
+    $("barFill").style.width = pct + "%";
+    $("pct").textContent = pct + "%";
+    body.classList.toggle("warning", state !== "unlocked" && remaining <= WARNING_SECONDS && remaining > CRITICAL_SECONDS);
+    body.classList.toggle("critical", state !== "unlocked" && remaining <= CRITICAL_SECONDS);
+  }
+
+  // ---- audio: espera a que cada pista termine de verdad ----
+  function play(el){
+    return new Promise(resolve => {
+      el.currentTime = 0;
+      const done = () => { el.removeEventListener("ended", done); clearTimeout(t); resolve(); };
+      const limit = (isFinite(el.duration) && el.duration > 0 ? el.duration : 15) * 1000 + 1500;
+      const t = setTimeout(done, limit);
+      el.addEventListener("ended", done);
+      el.play().catch(done);
+    });
+  }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  function stopAll(){ Object.values(aud).forEach(a => { a.pause(); a.currentTime = 0; }); }
+
+  async function announce(el){
+    const token = ++audioToken;
+    stopAll();
+    await play(aud.alarm);   if (token !== audioToken) return;
+    await wait(400);         if (token !== audioToken) return;
+    await play(el);          if (token !== audioToken) return;
+    await wait(600);         if (token !== audioToken) return;
+    await play(aud.alarm);
+  }
+
+  // ---- log de "archivos borrándose" ----
+  const FILES = [
+    "/austral/paleovirus_A7/genoma_completo.fasta", "/austral/paleovirus_A7/lecturas_R1.fastq.gz",
+    "/austral/paleovirus_A7/lecturas_R2.fastq.gz", "/austral/paleovirus_A7/capside_VP1.pdb",
+    "/austral/paleovirus_A7/alineamiento_cepas.aln", "/austral/paleovirus_A7/arbol_filogenetico.nwk",
+    "/austral/muestras/hielo_antartico_lote_07.csv", "/austral/muestras/hielo_antartico_lote_12.csv",
+    "/austral/informes/letalidad_modelos.pdf", "/austral/informes/bioseguridad_nivel4.pdf",
+    "/home/ehelix/notas/mutaciones_criticas.txt", "/home/ehelix/correo/borradores.mbox",
+    "/home/pnodal/tesis/capitulo3_estructura.docx", "/home/pnodal/tesis/figuras/fig7_capside.png",
+    "/austral/accesos/registro_12-11-2026.log", "/austral/camaras/cam01_12-11-2026.mp4",
+  ];
+  let fileIdx = 0;
+  function logLine(text){
+    const log = $("log");
+    const line = document.createElement("div");
+    line.textContent = text;
+    log.appendChild(line);
+    while (log.children.length > 6) log.firstChild.remove();
+  }
+  function logTick(){
+    if (state !== "running") return;
+    if (remaining % 7 === 0){
+      const f = FILES[fileIdx++ % FILES.length];
+      logLine("[" + fmt(totalSeconds - remaining) + "] rm -f " + f + " ... OK");
+    }
+  }
+
+  // ---- video de intro: al terminar arranca el timer ----
+  const introVideo = $("introVideo");
+  function playIntro(){
+    if (state !== "idle") return;
+    setState("intro");
+    introVideo.currentTime = 0;
+    introVideo.play().catch(() => endIntro());   // si el video no está o no carga, arranca igual
+  }
+  function endIntro(){
+    if (state !== "intro") return;
+    introVideo.pause();
+    setState("idle");
+    start(false);
+  }
+  function stopIntro(){
+    introVideo.pause();
+    introVideo.currentTime = 0;
+  }
+  introVideo.addEventListener("ended", endIntro);
+  introVideo.addEventListener("error", endIntro);
+
+  // ---- controles ----
+  function start(rapido){
+    if (state !== "idle") return;
+    remaining = totalSeconds;
+    $("log").innerHTML = "";
+    setState("running");
+    render();
+    announce(rapido ? aud.inicioRapido : aud.inicio);
+    tickHandle = setInterval(tick, 1000);
+    setTimeout(() => claveIn.focus(), 50);
+  }
+
+  function tick(){
+    if (state !== "running") return;
+    remaining = Math.max(0, remaining - 1);
+    render();
+    logTick();
+    if (remaining === 0) timeUp();
+  }
+
+  function togglePause(){
+    if (state === "running"){ setState("paused"); }
+    else if (state === "paused"){ setState("running"); claveIn.focus(); }
+    render();
+  }
+
+  function adjust(deltaMin){
+    if (state !== "running" && state !== "paused") return;
+    remaining = Math.max(1, remaining + deltaMin * 60);
+    totalSeconds = Math.max(totalSeconds, remaining);
+    render();
+    toast((deltaMin > 0 ? "+" : "−") + Math.abs(deltaMin) + " min");
+  }
+
+  function reset(){
+    clearInterval(tickHandle); tickHandle = null;
+    audioToken++; stopAll(); stopIntro();
+    totalSeconds = INITIAL_MINUTES * 60;
+    remaining = totalSeconds;
+    claveIn.value = ""; claveMsg.textContent = "";
+    $("log").innerHTML = "";
+    setState("idle");
+    render();
+  }
+
+  function tryUnlock(){
+    if (state !== "running" && state !== "paused") return;
+    if (normalize(claveIn.value) === normalize(UNLOCK_CODE)){
+      clearInterval(tickHandle); tickHandle = null;
+      setState("unlocked");
+      render();
+      $("elapsedTxt").textContent = "Tiempo de resolución: " + fmt(totalSeconds - remaining);
+      logLine("[" + fmt(totalSeconds - remaining) + "] PROTOCOLO AUSTRAL ABORTADO POR USUARIO AUTORIZADO");
+      announce(aud.unlock);
+    } else {
+      claveIn.classList.remove("shake"); void claveIn.offsetWidth; claveIn.classList.add("shake");
+      claveMsg.textContent = "CÓDIGO INVÁLIDO";
+      setTimeout(() => claveMsg.textContent = "", 1800);
+    }
+    claveIn.value = "";
+  }
+
+  function timeUp(){
+    clearInterval(tickHandle); tickHandle = null;
+    setState("dead");
+    render();
+    announce(aud.final);
+  }
+
+  let toastT;
+  function toast(t){
+    const el = $("toast");
+    el.textContent = t; el.style.opacity = 1;
+    clearTimeout(toastT); toastT = setTimeout(() => el.style.opacity = 0, 1200);
+  }
+
+  document.addEventListener("keydown", e => {
+    if (e.key === "F2"){ e.preventDefault(); togglePause(); return; }
+    if (e.key === "F3"){ e.preventDefault(); adjust(+1); return; }
+    if (e.key === "F4"){ e.preventDefault(); adjust(-1); return; }
+    if (e.key === "F8"){ e.preventDefault(); reset(); return; }
+    if (state === "idle"){
+      if (e.code === "Space"){ e.preventDefault(); playIntro(); }
+      else if (e.key === "r" || e.key === "R"){ e.preventDefault(); start(true); }
+      return;
+    }
+    if (state === "intro"){
+      e.preventDefault();
+      if (e.key === "s" || e.key === "S") endIntro();
+      return;
+    }
+    if (e.target === claveIn && e.key === "Enter") tryUnlock();
+  });
+
+  // si hacen click afuera, el foco vuelve al campo de clave
+  document.addEventListener("click", () => { if (state === "running" || state === "paused") claveIn.focus(); });
+
+  setState("idle");
+  render();
+})();
+</script>
+</body>
+</html>

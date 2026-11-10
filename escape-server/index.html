@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Proyecto Austral — Sistema de Archivos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="bg-grid"></div>
+
+  <!-- PANTALLA DE LOGIN -->
+  <main id="login-screen" class="centered">
+    <div class="login-box panel">
+      <div class="logo">PROYECTO <b>AUSTRAL</b></div>
+      <div class="org">Instituto Nacional de Virología Antártica · Terminal 03</div>
+
+      <div class="user-card">
+        <div class="avatar">MP</div>
+        <div>
+          <div class="user-name">María Paula Nodal</div>
+          <div class="user-role">Becaria doctoral · Laboratorio Helix</div>
+        </div>
+      </div>
+
+      <label class="field-label" for="login-input">Contraseña</label>
+      <input id="login-input" type="password" placeholder="••••••••••••" autocomplete="off" spellcheck="false" autofocus>
+
+      <div class="pw-hint">
+        <span class="hint-icon">?</span>
+        <span>Pista de contraseña: <em>“lo que cambió”</em></span>
+      </div>
+
+      <div class="row">
+        <button id="login-btn" class="primary">Ingresar</button>
+        <button id="clear-btn">Borrar</button>
+      </div>
+      <p id="login-msg" class="msg"></p>
+    </div>
+  </main>
+
+  <!-- INTERFAZ DEL SISTEMA -->
+  <div id="main-system" class="hidden">
+    <aside id="sidebar">
+      <div class="brand">PROYECTO <b>AUSTRAL</b></div>
+      <div class="section-title">Archivos</div>
+      <nav>
+        <ul>
+          <li class="file" data-file="ingresos">📄 registro_ingresos.html</li>
+          <li class="file" data-file="chat">💬 chat_informante.html</li>
+          <li id="evidence-item" class="locked">📦 evidencia_cifrada.zip <span class="badge">🔒</span></li>
+        </ul>
+      </nav>
+      <div class="sidebar-foot">
+        <div>Sesión: <b>María Paula Nodal</b></div>
+        <div id="lock-status" class="status locked-txt">● EVIDENCIA BLOQUEADA</div>
+      </div>
+    </aside>
+
+    <section id="workspace">
+      <div id="toolbar">
+        <div class="path">/home/pnodal/austral/</div>
+        <button id="logout-btn">Cerrar sesión</button>
+      </div>
+
+      <div id="windows-area">
+        <div id="welcome" class="window">
+          <div class="win-title">bienvenida.txt</div>
+          <div class="win-body">
+            <h2>Conexión establecida</h2>
+            <p>Sesión iniciada como <b>María Paula Nodal</b>. Último acceso: 12-11-2026 18:02.</p>
+            <ul class="welcome-list">
+              <li><b>📄 Registro de ingresos:</b> accesos al instituto el día del crimen.</li>
+              <li><b>💬 Chat:</b> conversación con el informante.</li>
+              <li><b>📦 Evidencia cifrada:</b> archivos protegidos. Requiere una clave adicional.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL ZIP -->
+  <div id="modal" class="hidden">
+    <div class="modal-box panel">
+      <div class="modal-icon">🔒</div>
+      <h3>evidencia_cifrada.zip</h3>
+      <p>Archivo cifrado. Se requiere clave.</p>
+      <p class="modal-key">Clave: <b>número de DNI, sin puntos</b>.</p>
+      <p id="zip-tries" class="tries"></p>
+      <input id="zip-pass" type="password" inputmode="numeric" placeholder="••••••••" autocomplete="off" spellcheck="false">
+      <div class="row">
+        <button id="zip-open" class="primary">Desbloquear</button>
+        <button id="zip-close">Cancelar</button>
+      </div>
+      <p id="zip-msg" class="msg"></p>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

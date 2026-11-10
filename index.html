@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Proyecto Austral</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="escape-server/style.css">
+<style>
+  /* Portada: enlaza las tres pantallas de la sala */
+  body{overflow:auto}
+  main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:56px 16px}
+  .logo{font-size:clamp(22px,4vw,34px)}
+  .org{margin-bottom:10px}
+  .intro{max-width:720px;margin:0 auto 40px;text-align:center;line-height:1.6;color:var(--muted)}
+  .intro b{color:var(--fg)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .card{display:flex;flex-direction:column;gap:10px;padding:24px;text-decoration:none;color:var(--fg);transition:.15s}
+  .card:hover{border-color:var(--accent-blue);box-shadow:0 0 24px rgba(46,168,255,.25);transform:translateY(-2px)}
+  .card .tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+  .card h2{margin:0;font-family:var(--display);font-weight:500;letter-spacing:.12em;font-size:20px;color:var(--accent-blue)}
+  .card p{margin:0;line-height:1.5;font-size:14px;color:var(--muted)}
+  .card .go{margin-top:auto;padding-top:8px;color:var(--accent-green);letter-spacing:2px;font-size:13px}
+  kbd{border:1px solid var(--muted);padding:0 5px;border-radius:3px;color:var(--fg)}
+  footer{margin-top:44px;text-align:center;font-size:12px;letter-spacing:1px;color:var(--muted);line-height:1.8}
+</style>
+</head>
+<body>
+  <div id="bg-grid"></div>
+  <main>
+    <div class="logo">PROYECTO <b>AUSTRAL</b></div>
+    <div class="org">Crimen en el laboratorio · El Virus del Hielo</div>
+    <p class="intro">
+      Pantallas de la sala de escape de bioinformática de la <b>Noche de los Museos</b>
+      (Facultad de Ciencias Exactas y Naturales, UBA). Cada una se abre en una computadora distinta de la sala.
+    </p>
+
+    <div class="cards">
+      <a class="card panel" href="timer/timer.html">
+        <span class="tag">PC de la operadora · proyectado</span>
+        <h2>TIMER</h2>
+        <p>Video de introducción y cuenta regresiva de 40 minutos del protocolo de seguridad.
+           <kbd>Espacio</kbd> para empezar, <kbd>F11</kbd> pantalla completa.</p>
+        <span class="go">› ABRIR</span>
+      </a>
+      <a class="card panel" href="escape-server/proteina.html">
+        <span class="tag">PC de María Paula · monitor A</span>
+        <h2>VISOR 3D</h2>
+        <p>Estructura de la proteína de cápside del Paleovirus A7 y el cuaderno de laboratorio.
+           Se rota con el mouse o las flechas.</p>
+        <span class="go">› ABRIR</span>
+      </a>
+      <a class="card panel" href="escape-server/index.html">
+        <span class="tag">PC de María Paula · monitor B</span>
+        <h2>SERVIDOR</h2>
+        <p>Login de María Paula Nodal, registro de ingresos, chat del informante y la evidencia cifrada.</p>
+        <span class="go">› ABRIR</span>
+      </a>
+    </div>
+
+    <footer>Noche de los Museos · FCEN-UBA</footer>
+  </main>
+</body>
+</html>
